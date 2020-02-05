@@ -45,7 +45,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 	token, err := request.AuthorizationHeaderExtractor.ExtractToken(req)
 	if err != nil {
-		logger.Warning("Bearer token extraction failed")
+		logger.WithError(err).Warning("Bearer token extraction failed")
 		tracing.SetErrorWithEvent(req, "Bearer token extraction failed")
 		return
 	}
@@ -59,15 +59,15 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 	r, err := http.NewRequest("POST", j.endpoint, strings.NewReader(data.Encode()))
 	if err != nil {
-		logger.Warning("Bearer token extraction failed")
-		tracing.SetErrorWithEvent(req, "Bearer token extraction failed")
+		logger.WithError(err).Warning("Introspection request initialization failed")
+		tracing.SetErrorWithEvent(req, "Introspection request initialization failed")
 	}
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
 	resp, err := c.Do(r)
 	if err != nil {
-		logger.Warning("Oauth token introspection failed")
+		logger.WithError(err).Warning("Oauth token introspection failed")
 		tracing.SetErrorWithEvent(req, "Oauth token introspection failed")
 		return
 	}
@@ -78,14 +78,14 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		logger.Warning("Reading of Oauth token introspection response failed")
+		logger.WithError(err).Warning("Reading of Oauth token introspection response failed")
 		tracing.SetErrorWithEvent(req, "Reading of Oauth token introspection response failed")
 		return
 	}
 
 	err = json.Unmarshal(respBody, &introspectionResp)
 	if err != nil {
-		logger.Warning("Unmarshaling of Oauth token introspection response failed")
+		logger.WithError(err).Warning("Unmarshaling of Oauth token introspection response failed")
 		tracing.SetErrorWithEvent(req, "Unmarshaling of Oauth token introspection response failed")
 		return
 	}
