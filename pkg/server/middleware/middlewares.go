@@ -116,6 +116,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// JwtIntrospection
+	if config.JwtIntrospection != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return auth.NewJwtIntrospection(ctx, next, *config.JwtIntrospection, middlewareName)
+		}
+	}
+
 	// BasicAuth
 	if config.BasicAuth != nil {
 		if middleware != nil {
