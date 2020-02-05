@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/containous/traefik/v2/pkg/ip"
-	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -38,6 +36,7 @@ type Middleware struct {
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty"`
+	JwtIntrospection  *JwtIntrospection  `json:"jwtIntrospection,omitempty" toml:"jwtIntrospection,omitempty" yaml:"jwtIntrospection,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -314,14 +313,9 @@ type SourceCriterion struct {
 
 // RateLimit holds the rate limiting configuration for a given router.
 type RateLimit struct {
-	// Average is the maximum rate, by default in requests/s, allowed for the given source.
+	// Average is the maximum rate, in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.
-	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
-	// one needs to define a Period larger than a second.
 	Average int64 `json:"average,omitempty" toml:"average,omitempty" yaml:"average,omitempty"`
-	// Period, in combination with Average, defines the actual maximum rate, such as:
-	// r = Average / Period. It defaults to a second.
-	Period types.Duration
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
 	Burst           int64            `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty"`
@@ -331,7 +325,6 @@ type RateLimit struct {
 // SetDefaults sets the default values on a RateLimit.
 func (r *RateLimit) SetDefaults() {
 	r.Burst = 1
-	r.Period = types.Duration(time.Second)
 	r.SourceCriterion = &SourceCriterion{
 		IPStrategy: &IPStrategy{},
 	}
@@ -401,12 +394,11 @@ type StripPrefixRegex struct {
 
 // TLSClientCertificateInfo holds the client TLS certificate info configuration.
 type TLSClientCertificateInfo struct {
-	NotAfter     bool                        `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty"`
-	NotBefore    bool                        `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty"`
-	Sans         bool                        `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
-	Subject      *TLSCLientCertificateDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty"`
-	Issuer       *TLSCLientCertificateDNInfo `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty"`
-	SerialNumber bool                        `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty"`
+	NotAfter  bool                        `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty"`
+	NotBefore bool                        `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty"`
+	Sans      bool                        `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
+	Subject   *TLSCLientCertificateDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty"`
+	Issuer    *TLSCLientCertificateDNInfo `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -506,4 +498,13 @@ func (c *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		InsecureSkipVerify: c.InsecureSkipVerify,
 		ClientAuth:         clientAuth,
 	}, nil
+}
+
+// +k8s:deepcopy-gen=true
+
+// JwtIntrospection holds the JwtIntrospection configuration.
+type JwtIntrospection struct {
+	Endpoint     string `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	ClientId     string `json:"clientId,omitempty" toml:"clientId,omitempty" yaml:"clientId,omitempty"`
+	ClientSecret string `json:"clientSecret,omitempty" toml:"clientSecret,omitempty" yaml:"clientSecret,omitempty"`
 }
