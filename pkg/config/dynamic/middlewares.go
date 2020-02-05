@@ -36,6 +36,7 @@ type Middleware struct {
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty"`
+	JwtIntrospection  *JwtIntrospection  `json:"jwtIntrospection,omitempty" toml:"jwtIntrospection,omitempty" yaml:"jwtIntrospection,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -497,4 +498,13 @@ func (c *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		InsecureSkipVerify: c.InsecureSkipVerify,
 		ClientAuth:         clientAuth,
 	}, nil
+}
+
+// +k8s:deepcopy-gen=true
+
+// JwtIntrospection holds the JwtIntrospection configuration.
+type JwtIntrospection struct {
+	Endpoint     string `json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	ClientId     string `json:"clientId,omitempty" toml:"clientId,omitempty" yaml:"clientId,omitempty"`
+	ClientSecret string `json:"clientSecret,omitempty" toml:"clientSecret,omitempty" yaml:"clientSecret,omitempty"`
 }
