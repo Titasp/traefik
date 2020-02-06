@@ -47,6 +47,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Bearer token extraction failed")
 		tracing.SetErrorWithEvent(req, "Bearer token extraction failed")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -61,6 +62,8 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Introspection request initialization failed")
 		tracing.SetErrorWithEvent(req, "Introspection request initialization failed")
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
@@ -69,6 +72,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Oauth token introspection failed")
 		tracing.SetErrorWithEvent(req, "Oauth token introspection failed")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -80,24 +84,30 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Reading of Oauth token introspection response failed")
 		tracing.SetErrorWithEvent(req, "Reading of Oauth token introspection response failed")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	err = json.Unmarshal(respBody, &introspectionResp)
 	if err != nil {
-		logger.WithError(err).Warning("Unmarshaling of Oauth token introspection response failed")
-		tracing.SetErrorWithEvent(req, "Unmarshaling of Oauth token introspection response failed")
+		logger.WithError(err).Warning("Failed to unmarshal oauth2 introspection response")
+		tracing.SetErrorWithEvent(req, "Failed to unmarshal oauth2 introspection response")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if !introspectionResp.Active {
-		logger.Debug("Authentication failed (token inactive)")
-		tracing.SetErrorWithEvent(req, "Authentication failed (token inactive)")
-		rw.Header().Set("Content-Type", "application/json")
-		rw.WriteHeader(http.StatusUnauthorized)
-		rw.Write([]byte(`{"error": "unauthorized access"}`))
+		logger.Info("Authentication failed. Token is inactive")
+		tracing.SetErrorWithEvent(req, "Authentication failed. Token is inactive")
+		j.writeResponseWithMessage(rw, http.StatusUnauthorized, "inactive access token")
 		return
 	}
 
 	j.next.ServeHTTP(rw, req)
+}
+
+func (j *jwtIntrospection) writeResponseWithMessage(rw http.ResponseWriter, code int, message string) {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(code)
+	rw.Write([]byte(`{"message":"` + message + `"}`))
 }
