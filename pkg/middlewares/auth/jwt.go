@@ -62,7 +62,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Introspection request initialization failed")
 		tracing.SetErrorWithEvent(req, "Introspection request initialization failed")
-		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -72,7 +72,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Oauth token introspection failed")
 		tracing.SetErrorWithEvent(req, "Oauth token introspection failed")
-		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Reading of Oauth token introspection response failed")
 		tracing.SetErrorWithEvent(req, "Reading of Oauth token introspection response failed")
-		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Failed to unmarshal oauth2 introspection response")
 		tracing.SetErrorWithEvent(req, "Failed to unmarshal oauth2 introspection response")
-		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
