@@ -47,7 +47,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Bearer token extraction failed")
 		tracing.SetErrorWithEvent(req, "Bearer token extraction failed")
-		rw.WriteHeader(http.StatusInternalServerError)
+		j.writeResponseWithMessage(rw, http.StatusUnauthorized, "unauthorized access")
 		return
 	}
 
@@ -62,7 +62,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Introspection request initialization failed")
 		tracing.SetErrorWithEvent(req, "Introspection request initialization failed")
-		rw.WriteHeader(http.StatusInternalServerError)
+		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -72,7 +72,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Oauth token introspection failed")
 		tracing.SetErrorWithEvent(req, "Oauth token introspection failed")
-		rw.WriteHeader(http.StatusInternalServerError)
+		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -84,7 +84,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Reading of Oauth token introspection response failed")
 		tracing.SetErrorWithEvent(req, "Reading of Oauth token introspection response failed")
-		rw.WriteHeader(http.StatusInternalServerError)
+		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -92,7 +92,7 @@ func (j *jwtIntrospection) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		logger.WithError(err).Warning("Failed to unmarshal oauth2 introspection response")
 		tracing.SetErrorWithEvent(req, "Failed to unmarshal oauth2 introspection response")
-		rw.WriteHeader(http.StatusInternalServerError)
+		j.writeResponseWithMessage(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
